@@ -4,6 +4,9 @@
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
+int ledUserControl = LED_BUILTIN;
+int ledConnection = D1;
+int ledNetProcess = D2;
 
 int** StringToDoubleIntArray(std::string inputStr, std::string delimiter, int arr1Len = 0, int arr2Len = 0)
 {
@@ -46,6 +49,7 @@ int** StringToDoubleIntArray(std::string inputStr, std::string delimiter, int ar
 
 void path(String location)
 {
+    digitalWrite(ledNetProcess, HIGH);
     if (location == "/")
     {
         //Website minified by my cpp.js file
@@ -67,16 +71,18 @@ void path(String location)
         for (uint8_t i = 0; i < server.args(); i++) { message += " " + server.argName(i) + ": " + server.arg(i) + "\n"; }
         server.send(404, "text/plain", message);
     }
+    digitalWrite(ledNetProcess, LOW);
 }
 
 String ledAnalog = "1023";
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
 {
+    digitalWrite(ledNetProcess, HIGH);
     std::string message;
     for (int i = 0; i < length; i++) { message += (char) payload[i]; }
     if (message == "/")
     {
-        //String ledAnalog = String(analogRead(LED_BUILTIN)); //Not working
+        //String ledAnalog = String(analogRead(ledControl)); //Not working
         Serial.println("WS sending new client (" + webSocket.remoteIP(num).toString() + ") current LED status of: " + ledAnalog + ",0");
         webSocket.sendTXT(num, ledAnalog + ",0"); //Send new client current led status
     }
@@ -85,39 +91,54 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.println("WS recieved: " + String(message.c_str()));
         bool resetLED = false;
         int** arr1 = StringToDoubleIntArray(message, "],[", 0, 2);
+        digitalWrite(ledNetProcess, LOW);
         for (int i = 1; i < arr1[0][0]; i++)
         {
+            digitalWrite(ledNetProcess, HIGH);
             String arr1Str = String(arr1[i][0]), arr2Str = String(arr1[i][1]);
             Serial.println("Execute: Brightness(" + arr1Str + ") Time(" + arr2Str + ")");
             webSocket.broadcastTXT(arr1Str + "," + arr2Str);
-            analogWrite(LED_BUILTIN, arr1[i][0]);
+            analogWrite(ledUserControl, arr1[i][0]);
             ledAnalog = arr1Str;
-
+            digitalWrite(ledNetProcess, LOW);
             if (arr1[i][1] == 0) { break; }
             else { delay(arr1[i][1]); resetLED = true; }
         }
-        if (resetLED) { digitalWrite(LED_BUILTIN, HIGH); webSocket.broadcastTXT("1023,0"); ledAnalog = "1023"; }
+        if (resetLED)
+        {
+            digitalWrite(ledNetProcess, HIGH);
+            digitalWrite(ledUserControl, HIGH);
+            webSocket.broadcastTXT("1023,0");
+            ledAnalog = "1023";
+            digitalWrite(ledNetProcess, LOW);
+        }
     }
+    digitalWrite(ledNetProcess, LOW);
 }
 
 void setup()
 {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    WiFi.softAP("ESP8266_NodeMCU-V3", "_ESP8266");
-    //WiFi.begin("ssid", "password"); //Use SoftAP when done
+    pinMode(ledUserControl, OUTPUT);
+    pinMode(ledConnection, OUTPUT);
+    pinMode(ledNetProcess, OUTPUT);
+    digitalWrite(ledUserControl, HIGH);
+    digitalWrite(ledConnection, LOW);
+    digitalWrite(ledNetProcess, LOW);
+    WiFi.begin("BT Upstairs Internet", "BTUpstairs"); //Use SoftAP when done
     Serial.begin(115200);
     Serial.println();
     Serial.print("Connecting");
     while(WiFi.status() != WL_CONNECTED) { Serial.print("."); delay(500); } //Wait for connection
     Serial.print("\nLocal IP Address: ");
     Serial.println(WiFi.localIP());
+    WiFi.softAP("ESP8266_NodeMCU-V3", "_ESP8266");
 
     server.on("/", [](){ path("/"); });
     server.onNotFound([](){ path(""); });
     server.begin();
     webSocket.begin();
     webSocket.onEvent(webSocketEvent);
+    digitalWrite(ledConnection, HIGH);
 }
 
 void loop()
