@@ -1,10 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
-#include <iostream>
-#include <string>
-#include <bits/stdc++.h>
-#include <ArduinoJson.h>
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
