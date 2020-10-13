@@ -30,6 +30,7 @@
         <input type="range" min="0" max="1023" value="512" id="sldBright">
     </div>
     <hr>
+    <h5 id="ip">Arduino IP:</h5>
     <script>
         var ws;
         var ledState;
@@ -37,6 +38,7 @@
         window.addEventListener("load", () =>
         {
             setupWebsocket();
+            document.querySelector("#ip").innerHTML = "Arduino IP: " + window.location.hostname;
             ledState = document.querySelector("#ledState");
             brightness = document.querySelector("#brightness");
 
@@ -80,14 +82,17 @@
             let seqDelay = document.querySelector("#seqDelay");
             let seqBrightVal = Math.round(parseInt(seqBright.value));
             let seqDelaytVal = Math.round(parseInt(seqDelay.value));
-            if (seqBrightVal > 1023) { seqBrightVal = 1023; }
-            else if (seqBrightVal < 0) { seqBrightVal = 0; }
-            if (seqDelaytVal > 10000) { seqDelaytVal = 10000; }
-            else if (seqDelaytVal < 1) { seqDelaytVal = 1; }
-            sequenceValue.push([seqBrightVal, seqDelaytVal]);
-            document.querySelector("#sequence").value = JSON.stringify(sequenceValue);
-            seqBright.value = "";
-            seqDelay.value = "";
+            if (seqBright.value != "" && seqDelay.value != "")
+            {
+                if (seqBrightVal > 1023) { seqBrightVal = 1023; }
+                else if (seqBrightVal < 0) { seqBrightVal = 0; }
+                if (seqDelaytVal > 10000) { seqDelaytVal = 10000; }
+                else if (seqDelaytVal < 1) { seqDelaytVal = 1; }
+                sequenceValue.push([seqBrightVal, seqDelaytVal]);
+                document.querySelector("#sequence").value = JSON.stringify(sequenceValue);
+                seqBright.value = "";
+                seqDelay.value = "";
+            }
         }
 
         function clearSequence()
