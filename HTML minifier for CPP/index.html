@@ -21,7 +21,7 @@
         <input type="number" min="1" max="10000" id="seqDelay" placeholder="Delay">
         <input type="button" id="addToSequence" value="Add to sequence">
         <input type="button" id="clearSequence" value="Clear sequence">
-        <textarea id="sequence" readonly>[]</textarea>
+        <textarea id="sequence" readonly>[[0,500],[500,1000],[250,500],[750,1000],[0,500]]</textarea>
         <input type="button" id="sendSequence" value="Submit sequence">
     </div>
     <hr>
@@ -75,7 +75,7 @@
             ws.send(JSON.stringify([[ledState.checked ? 1023 : 0, 0]]));
         }
 
-        var sequenceValue = [];
+        var sequenceValue = [[0,500],[500,1000],[250,500],[750,1000],[0,500]];
         function addToSequence()
         {
             let seqBright = document.querySelector("#seqBright");
